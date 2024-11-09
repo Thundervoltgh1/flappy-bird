@@ -1,4 +1,5 @@
 import pygame,sys
+import random
 pygame.init()
 sw=800
 sh=600
@@ -11,6 +12,8 @@ screen.fill("white")
 bg=pygame.image.load('fbg.png')
 ground=pygame.image.load('fbground.png')
 pipe_freq=1500
+pipe_gap=150
+passpipe=False
 
 game_over=False
 fps=50
@@ -26,9 +29,9 @@ class Pipe(pygame.sprite.Sprite):
         self.rect=self.image.get_rect()
         if position==1:
             self.image=pygame.transform.flip(self.image,False,True)
-            self.rect.bottomleft=[x,y]
+            self.rect.bottomleft=[x,y-(pipe_gap/2)]
         elif position==-1:
-            self.rect.topleft=[x,y]
+            self.rect.topleft=[x,y+(pipe_gap/2)]
     def update(self):
         self.rect.x-=speed
         
@@ -87,21 +90,34 @@ while True:
     birdgroup.draw(screen)
     pipegroup.draw(screen)
     screen.blit(ground,(ground_scroll,550))
-    draw_text(str(score),10,10)
+    
     ground_scroll-=ground_speed
     if abs(ground_scroll)>35:
         ground_scroll=0
+    if len(pipegroup)>0:
+        if birdgroup.sprites()[0].rect.left>pipegroup.sprites()[0].rect.left\
+        and birdgroup.sprites()[0].rect.right<pipegroup.sprites()[0].rect.right and passpipe==False:
+            passpipe=True
+        if passpipe==True:
+            if birdgroup.sprites()[0].rect.left>pipegroup.sprites()[0].rect.right:
+                score+=1
+                print(score)
+                print(passpipe)
+                passpipe=False
+    
+    draw_text(str(score),10,10)
 
     if flying==True and game_over==False:
         time_now=pygame.time.get_ticks()
         if time_now-lastpipe>pipe_freq:
-            
-            bpipe=Pipe(sw,sh//2,-1)
+            pheight=random.randint(-100,100)
+
+            bpipe=Pipe(sw,sh//2+pheight,-1)
             pipegroup.add(bpipe)
-            tpipe=Pipe(sw,sh//2,1)
+            tpipe=Pipe(sw,sh//2+pheight,1)
             pipegroup.add(tpipe)
             lastpipe=time_now
-
+            
     birdgroup.update()
     pipegroup.update()
     
