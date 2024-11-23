@@ -15,13 +15,21 @@ pipe_freq=1500
 pipe_gap=150
 passpipe=False
 
+restart=pygame.image.load("restart_button.png")
+
+
 game_over=False
 fps=50
 font=pygame.font.SysFont('Bauhaus 93',60)
 lastpipe= pygame.time.get_ticks()-pipe_freq
 flying=False
 pygame.display.update()
-
+def reset_game():
+    pipegroup.empty()
+    flappy.rect.x=100
+    flappy.rect.y=int(sh//2)
+    score=0
+    return score
 class Pipe(pygame.sprite.Sprite):
     def __init__(self,x,y,position):
         pygame.sprite.Sprite.__init__(self)
@@ -34,7 +42,23 @@ class Pipe(pygame.sprite.Sprite):
             self.rect.topleft=[x,y+(pipe_gap/2)]
     def update(self):
         self.rect.x-=speed
-        
+        if self.rect.right<0:
+            self.kill()
+            
+class Button():
+    def __init__(self,image,x,y):
+        self.image=image
+        self.rect=self.image.get_rect()
+        self.rect.topleft=(x,y)
+    def draw(self):
+        action=False
+        pos=pygame.mouse.get_pos()
+        if self.rect.collidepoint(pos):
+            action=True
+        screen.blit(self.image,(self.rect.x,self.rect.y))
+        return action
+button=Button(restart,sw//2,sh//2)
+
 pipegroup=pygame.sprite.Group()
 
 class Bird(pygame.sprite.Sprite):
@@ -64,8 +88,10 @@ class Bird(pygame.sprite.Sprite):
             if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
                 self.clicked = True
                 self.vel = -10
+                self.image=pygame.transform.rotate(self.images[self.index],20)
             if pygame.mouse.get_pressed()[0] == 0:
                 self.clicked = False
+                self.image=pygame.transform.rotate(self.images[self.index],-20)
             #handle the animation
             flap_cooldown = 5
             self.counter += 1
@@ -76,7 +102,9 @@ class Bird(pygame.sprite.Sprite):
                 if self.index >= len(self.images):
                     self.index = 0
                 self.image = self.images[self.index]
-
+           
+        else :
+            self.image=pygame.transform.rotate(self.images[self.index],-90)
 flappy=Bird(100,sh/2)
 birdgroup=pygame.sprite.Group()
 birdgroup.add(flappy)
@@ -129,11 +157,16 @@ while True:
         ground_scroll-=ground_speed
         if abs(ground_scroll)>35:
             ground_scroll=0
+    if game_over==True:
+        if button.draw():
+            game_over=False
+            score=reset_game()
     
     for event in pygame.event.get():
         if event.type==pygame.QUIT:
             sys.exit()
         if event.type==pygame.MOUSEBUTTONDOWN and flying==False and game_over==False:
             flying=True
+        
  
     pygame.display.update()
